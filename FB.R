@@ -5,7 +5,9 @@
 # Language: English
 # Code by Dries Bultynck
 # Questions, bugs & requests: dries@driesbultynck.be or dries@parafix.io
-# Reference: https://www.deducive.com/blog/2018/1/24/fbinsightsr-get-facebook-marketing-insights-into-r-easily
+# References: 
+# https://www.deducive.com/blog/2018/1/24/fbinsightsr-get-facebook-marketing-insights-into-r-easily
+# https://developers.facebook.com/tools/accesstoken
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
