@@ -1,20 +1,19 @@
 # ------------------------------------------------------------------------
 # FACEBOOK REACH PREDICTION
 #
-# R Statistics & Data Science for Marketing Analytics purposes
+# R Statistics & Data Science related scripts for Marketing Analytics purposes
 # Language: English
 # Code by Dries Bultynck
-# Questions & bugs or requests: dries@driesbultynck.be or dries@parafix.io
+# Questions, bugs & requests: dries@driesbultynck.be or dries@parafix.io
 # Reference: https://www.deducive.com/blog/2018/1/24/fbinsightsr-get-facebook-marketing-insights-into-r-easily
 # ------------------------------------------------------------------------
-
 
 # ------------------------------------------------------------------------
 # Variables & settings
 # ------------------------------------------------------------------------
 directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
 fbKey = "EAAIfIYjc6WUBAN364GCbSZBbEq3lGkQx0hvFA792t03YByZBJK90XIHelbGLVQBYnrQ7DuZCePlgApnMcblcOWWDbgrjFhhR9CSMCN7TSCv5krRBFFvTdzUOvvF66tASccdaZA3Exr5tBP1qCBuQQc5RPfBjvsMhcgb3YXH70nZBXhT4TQ4ibQGQBWD8KP0wZD"
-
+fbAccount = "act_1523559664405168"
 #rm(list=ls())
 #dev.off()
 setwd(directory)
@@ -44,7 +43,6 @@ opendir <- function(dir = getwd()){
   }
 }
 
-
 # ------------------------------------------------------------------------
 # Code
 # ------------------------------------------------------------------------
@@ -54,9 +52,9 @@ opendir <- function(dir = getwd()){
 ?fbins_ag
 
 #get adsets
-fbDataAdsets <- fbins_summ("2018-06-22","2018-06-28","adset","",fbKey,"act_1523559664405168")
+fbDataAdsets <- fbins_summ("2018-06-22","2018-06-28","adset","",fbKey,fbAccount)
 #get ads
-fbDataAds <- fbins_summ("2018-06-22","2018-06-28","ad","",fbKey,"act_1523559664405168")
+fbDataAds <- fbins_summ("2018-06-22","2018-06-28","ad","",fbKey,fbAccount)
 
 #glimpse(fbDataAds)
 #glimpse(fbAge)
@@ -82,6 +80,8 @@ predict(linearMod, data.frame(unique_clicks = c(5000, 3000, 1000)))
 
 #plot reach & unique clicks
 plot(fbDataAdsets$reach,fbDataAdsets$unique_clicks)
+#plot full model
+plot(linearMod)
 
 #export to xls
 export <- fbDataAds
