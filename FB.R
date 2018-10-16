@@ -12,8 +12,8 @@
 # Variables & settings
 # ------------------------------------------------------------------------
 directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
-fbKey = "EAAIfIYjc6WUBAN364GCbSZBbEq3lGkQx0hvFA792t03YByZBJK90XIHelbGLVQBYnrQ7DuZCePlgApnMcblcOWWDbgrjFhhR9CSMCN7TSCv5krRBFFvTdzUOvvF66tASccdaZA3Exr5tBP1qCBuQQc5RPfBjvsMhcgb3YXH70nZBXhT4TQ4ibQGQBWD8KP0wZD"
-fbAccount = "act_1523559664405168"
+fbKey = ""
+fbAccount = "act_"
 #rm(list=ls())
 #dev.off()
 setwd(directory)
