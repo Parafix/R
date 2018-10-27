@@ -23,16 +23,11 @@ setwd(directory)
 # ------------------------------------------------------------------------
 # Packages
 # ------------------------------------------------------------------------
-install.packages("devtools")
-library(devtools)
+install.packages("install.load")
+library(install.load)
+install_load("devtools","dplyr","reshape2","xlsx")
 install_github("Deducive/FBinsightsR")
 library(FBinsightsR)
-install.packages("dplyr")
-library(dplyr)
-install.packages("reshape2")
-library(reshape2)
-install.packages('xlsx')
-library(xlsx)
 
 # ------------------------------------------------------------------------
 # Functions
