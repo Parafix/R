@@ -5,4 +5,4 @@ Statistics & Data Science related scripts
 <br>Questions, bugs or requests: dries@driesbultynck.be or dries@parafix.io
 
 # Facebook algorithm impact prediction
-in progress
+predict needed reach based on desired clicks and real historic reach data from past campaigns.
