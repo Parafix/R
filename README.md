@@ -6,5 +6,5 @@ Statistics & Data Science related scripts
 
 # Facebook algorithm impact prediction
 Script: Predict needed reach based on desired clicks and real historic reach data from past reach campaigns.
-<br>Model: not accurate yet
-<br>Focus: improving the model
+<br>Model: link clicks models is accurate
+<br>Focus: paused for now
