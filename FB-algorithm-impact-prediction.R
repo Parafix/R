@@ -14,7 +14,7 @@
 # Variables & settings
 # ------------------------------------------------------------------------
 directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
-fbKey = "EAAIfIYjc6WUBALu88PqfkigIsmDzsvN7ZAPge8aNlTn31qGlDjM2ZBI6FRNTZBEszVYxMC6LfWkwr8ml7eb2qpeNZCybrXAHq7mY4xt43P9ZAIfkXfDTKkOc3ZCI2BmdkQaSY81APckKZBI2kqZBnytZCnhmlnZB4AxUBKAzZCZBcUwQ6qNri3SZAIPXLXO6bomovDcIZD"
+fbKey = "EAAIfIYjc6WUBABZBBmHts5IZAUWImTx7nFIjr69TKgPagGpEe702r4PjEGdKvXtNEVYW3iERr43t8WEzEPtIIYZBNsFZByQqMrujZAplrTPzPNX2AjBzAZCemEpQQ0bY2GuEaWxhro7hZBG3bHXHQy9m0rCH1RlZBUJrpwKiWa032dSIHPk6q1dyO4EGQNfkgT4ZD"
 fbAccount = "act_1523559664405168"
 col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
 #rm(list=ls())
@@ -118,7 +118,7 @@ corrplot(fbDataAdsetsREACHcor, method="color", col=col(200),
          diag=FALSE)
 
 corTestLINK_CLICKS <- cor.mtest(fbDataAdsetsLINK_CLICKScor,0.95)
-corrplot(fbDataAdsetsREACHcor, method="color", col=col(200),  
+corrplot(fbDataAdsetsLINK_CLICKScor, method="color", col=col(200),  
          type="upper", order="hclust", 
          addCoef.col = "black", # Add coefficient of correlation
          tl.col="black", tl.srt=45, #Text label color and rotation
@@ -127,15 +127,15 @@ corrplot(fbDataAdsetsREACHcor, method="color", col=col(200),
          # hide correlation coefficient on the principal diagonal
          diag=FALSE)
 
-corTestCONVERSIONS <- cor.mtest(fbDataAdsetsCONVERSIONScor,0.95)
-corrplot(fbDataAdsetsREACHcor, method="color", col=col(200),  
-         type="upper", order="hclust", 
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black", tl.srt=45, #Text label color and rotation
-         # Combine with significance
-         p.mat = corTestCONVERSIONS[[1]], sig.level = 0.05, insig = "blank", 
-         # hide correlation coefficient on the principal diagonal
-         diag=FALSE)
+# corTestCONVERSIONS <- cor.mtest(fbDataAdsetsCONVERSIONScor,0.95)
+# corrplot(fbDataAdsetsCONVERSIONScor, method="color", col=col(200),  
+#          type="upper", order="hclust", 
+#          addCoef.col = "black", # Add coefficient of correlation
+#          tl.col="black", tl.srt=45, #Text label color and rotation
+#          # Combine with significance
+#          p.mat = corTestCONVERSIONS[[1]], sig.level = 0.05, insig = "blank", 
+#          # hide correlation coefficient on the principal diagonal
+#          diag=FALSE)
 
 #calc correlation
 #round(cor(fbDataAdsetsREACH$reach, fbDataAdsetsREACH$unique_clicks),2)
@@ -157,22 +157,47 @@ cor.test(fbDataAdsetsLINK_CLICKS$reach, fbDataAdsetsLINK_CLICKS$cpm)
 #fbDataAdsetsLINK_CLICKS$unique_clicks <- fbDataAdsetsLINK_CLICKS$unique_clicks - boxplot.stats(fbDataAdsetsLINK_CLICKS$unique_clicks)$out
 #fbDataAdsetsLINK_CLICKS$reach <- fbDataAdsetsLINK_CLICKS$reach - boxplot.stats(fbDataAdsetsLINK_CLICKS$reach)$out
 
-set.seed(3)
-unique_clicks.c = scale(fbDataAdsetsLINK_CLICKS$unique_clicks, center=TRUE, scale=FALSE)
-linearModLINK_CLICKS <- lm(reach~unique_clicks.c,fbDataAdsetsLINK_CLICKS)
-plot(linearModLINK_CLICKS)
-summary(linearModLINK_CLICKS)
 
-#predict reach based on unique clicks
-predict(linearModLINK_CLICKS, data.frame(unique_clicks = c(5000, 3000, 1000)))
+#PREDICT REACH NEEDED BASED ON CLICKS WANTED FOR LINK CLICK CAMPAIGNS
+
+set.seed(3)
+unique_clicks.c = scale(fbDataAdsetsLINK_CLICKS$unique_clicks, center=TRUE, scale=TRUE)
+linearModLINK_CLICKS <- lm(reach~unique_clicks,fbDataAdsetsLINK_CLICKS)
+plot(linearModLINK_CLICKS)
+summary(linearModLINK_CLICKS) 
+
+#predict minimum reach based on unique clicks
+round(predict(linearModLINK_CLICKS, data.frame(unique_clicks = c(5000, 3000, 1000))))
+
+plot(fbDataAdsetsLINK_CLICKS$unique_clicks, fbDataAdsetsLINK_CLICKS$reach)
+abline(linearModLINK_CLICKS)
+
+
+#PREDICT REACH BASED CPM OR CLICKS WANTED FOR REACH CAMPAIGNS
 
 #build linear model where reach is modelled by CPM
-linearModREACHCPM <- lm(reach~cpm,fbDataAdsetsLINK_CLICKS)
+linearModREACHCPM <- lm(reach~cpm,fbDataAdsetsREACH)
 plot(linearModREACHCPM)
 summary(linearModREACHCPM)
 #predict unique clicks based on reach & frequency
-predict(linearModREACHCPM, data.frame(cpm = c(3, 4, 10)))
+round(predict(linearModREACHCPM, data.frame(cpm = c(3,4,5,10))))
 
+plot(fbDataAdsetsREACH$cpm, fbDataAdsetsREACH$reach)
+abline(linearModREACHCPM)
+
+
+#build linear model where reach is modelled by unique_clicks
+unique_clicks2 <- fbDataAdsetsREACH$unique_clicks*fbDataAdsetsREACH$unique_clicks
+unique_clicks3 <- fbDataAdsetsREACH$unique_clicks*fbDataAdsetsREACH$unique_clicks*fbDataAdsetsREACH$unique_clicks
+
+linearModREACHLINK_CLICKS <- lm(reach~unique_clicks+unique_clicks2+unique_clicks3,fbDataAdsetsREACH)
+plot(linearModREACHLINK_CLICKS)
+summary(linearModREACHLINK_CLICKS) 
+#predict reach based on unique clicks
+round(predict(linearModREACHLINK_CLICKS, data.frame(unique_clicks = c(1000, 500, 100),unique_clicks2 = c(1000, 500, 100),unique_clicks3 = c(1000, 500, 100))))
+
+plot(fbDataAdsetsREACH$unique_clicks, fbDataAdsetsREACH$reach)
+abline(linearModREACHLINK_CLICKS)
 
 # ------------------------------------------------------------------------
 # Export
