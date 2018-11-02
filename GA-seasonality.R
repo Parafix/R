@@ -52,10 +52,27 @@ gaDataSelected <- gaData %>%
   select(date, channelGrouping, sessions) %>%
   spread(channelGrouping, sessions)
 
+#rename columns
+names(gaDataSelected)[2]<-"Other"
+names(gaDataSelected)[6]<-"Organic"
+names(gaDataSelected)[8]<-"Paid"
+
 # - GENERAL STATISTICS -------------------------------------------------------
 
 gaDataSelected$date <- as.Date(gaDataSelected$date)
 gaDataSelected[is.na(gaDataSelected)] <- 0
+
+pairs(gaDataSelected)
+
+library(ggplot2)
+gg <- ggplot(data = gaDataSelected) + 
+  theme_minimal() + 
+  ggtitle("Paid (blue) vs Direct (orange) search")
+gg <- gg + 
+  geom_line(aes(x = as.Date(date), y = `Paid`), col = "blue")
+gg + geom_line(aes(x = as.Date(date), y = `Direct`), col = "orange")
+
+ccf(gaDataSelected$Paid, gaDataSelected$Direct)
 
 #gaDataSelected <- acast(gaData, year ~ month)
 #frequency : 1=year, 4=quarter, 12=month, 
@@ -64,7 +81,7 @@ gaDataSelected[is.na(gaDataSelected)] <- 0
 #gaDataSelectedTS <- ts(gaData$newusers, start=c(2015,1), end=c(2018,9), frequency=12)
 #gaDataSelectedTS <- ts(gaData[-1], start=c(2016,1), end=c(2018,9), frequency=12)
 #gaDataSelectedTS <- ts(gaData$goalCompletionsAll, start=c(2008,1), end=c(2017,12), frequency=365)
-gaDataSelectedTS <- ts(gaDataSelected[-1], frequency = 7)
+gaDataSelectedTS <- ts(gaDataSelected[-1], frequency = 365)
 
 #raw view of trend
 plot(gaDataSelectedTS, type="b")
@@ -82,8 +99,8 @@ plot(log(gaDataSelectedTS)) #if fluctuations are increasing per time index
 #plot(gaDataSelectedTSEMA,type="b")
 
 #decomposed view of trend
-decompose(gaDataSelectedTS[, "Paid Search"])
-plot(decompose(gaDataSelectedTS[, "Paid Search"]),type="b")
+decompose(gaDataSelectedTS[, "Paid"])
+plot(decompose(gaDataSelectedTS[, "Paid"]),type="b")
 
 #decompose(gaDataSelectedTS)
 #plot(decompose(gaDataSelectedTS),type="b") 
@@ -94,10 +111,10 @@ plot(decompose(gaDataSelectedTS[, "Paid Search"]),type="b")
 
 #subtract seasonal impact from time series
 #gaDataSelectedDecomposedComponents <- decompose(gaDataSelectedTS)
-gaDataSelectedDecomposedComponents <- decompose(gaDataSelectedTS[, "Paid Search"])
+gaDataSelectedDecomposedComponents <- decompose(gaDataSelectedTS[, "Paid"])
 #plot(gaDataSelectedDecomposedComponents$seasonal)
 #gaDataSelectedTSAdjusted <- gaDataSelectedTS - gaDataSelectedDecomposedComponents$seasonal #- gaDataSelectedDecomposedComponents$random
-gaDataSelectedTSAdjusted <- gaDataSelectedTS[, "Paid Search"] - gaDataSelectedDecomposedComponents$seasonal
+gaDataSelectedTSAdjusted <- gaDataSelectedTS[, "Paid"] - gaDataSelectedDecomposedComponents$seasonal
 plot(gaDataSelectedTSAdjusted,type="b")
 
 #check what forecasting technique should be picked
@@ -166,7 +183,7 @@ pre.period <- as.Date(c("2018-02-01","2018-05-31"))
 post.period <- as.Date(c("2018-06-01","2018-09-30"))
 
 ## data in order of response, predictor1, predictor2, etc.
-ciModel <- gaDataSelectedXTS[, c("Organic Search","Paid Search","Direct")]
+ciModel <- gaDataSelectedXTS[, c("Direct","Paid","Organic")]
 
 impact <- CausalImpact(ciModel, pre.period, post.period)
 plot(impact)
