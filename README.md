@@ -9,8 +9,13 @@ Script: Predict needed reach based on desired clicks and real historic reach dat
 <br>Model: link clicks models is accurate
 <br>Focus: done
 
-# Google Analytics Seasonality
+# Google Analytics - Seasonality
 Script: Check correlation + cross lag impact, decompose trends & seasonality, forecast traffic & show causal impact
+<br>Model: accurancy to check
+<br>Focus: done
+
+# Google Analytics - Day type corr
+Script: Impact of type of day on Revenue - days like: day of week, holiday, closing days, ...
 <br>Model: accurancy to check
 <br>Focus: done
 
