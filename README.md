@@ -13,3 +13,8 @@ Script: Predict needed reach based on desired clicks and real historic reach dat
 Script: Check correlation + cross lag impact, decompose trends & seasonality, forecast traffic & show causal impact
 <br>Model: accurancy to check
 <br>Focus: done
+
+# Google Analytics - Next Best Content by Page
+Script: Market basket analysis based on combined page visits per session (optional: per user-id or client-id)
+<br>Model: accurancy to check
+<br>Focus: done
