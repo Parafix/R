@@ -23,3 +23,8 @@ Script: Impact of type of day on Revenue - days like: day of week, holiday, clos
 Script: Market basket analysis based on combined page visits per session (optional: per user-id or client-id)
 <br>Model: accurancy to check
 <br>Focus: done
+
+# Weather & Google Analytics - Impact of weather
+Script: Correlation & prediction of outcome based on weather data & Google Analytics goals
+<br>Model: to build
+<br>Focus: on-going
