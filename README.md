@@ -26,5 +26,5 @@ Script: Market basket analysis based on combined page visits per session (option
 
 # Weather & Google Analytics - Impact of weather
 Script: Correlation & prediction of outcome based on weather data & Google Analytics goals
-<br>Model: to build
+<br>Model: accurancy is not good
 <br>Focus: on-going
