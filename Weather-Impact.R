@@ -7,6 +7,7 @@
 # Questions, bugs & requests: dries@driesbultynck.be or dries@parafix.io
 # References:
 # https://github.com/BvHest/KNMIr/blob/master/vignettes/HowToUseKNMIr.Rmd
+# http://r-statistics.co/Outlier-Treatment-With-R.html
 # Alternative:
 # https://github.com/ropensci/nasapower
 # ------------------------------------------------------------------------
@@ -40,6 +41,12 @@ colnames_to_numeric <- function(df) {
     df[[colname]] <- as.numeric(df[[colname]])
   }
 }
+
+#mean average error
+mae <- function(error){mean(abs(error))}
+
+#root mean square error
+RMSE <- function(error){sqrt(mean(error^2))}
 
 # ------------------------------------------------------------------------
 # Import Weather data
@@ -125,25 +132,45 @@ gg + labs(x = "Week", y ="Transactions", title="Trend of transactions per week",
 #cor.test(weatherData$percZon,weatherData$gemWind)
 #chart.Correlation(dataMerged, histogram=TRUE, pch=19)
 
+# ------------------------------------------------------------------------
+# Build model total merged data
+# ------------------------------------------------------------------------
+
 fit1 <- lm(addToCart ~ newUsers, dataMerged)
+
+#Multivariate Model Approach to ouliers
+cooksd <- cooks.distance(fit1)
+#plot outliers
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")
+#list influentials
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))]) 
+head(dataMerged[influential, ])
+
+#delete influentials - fast approach
+dataMerged <- dataMerged[-c(3,21,124,126,137,144),]
+
+#build model again
+fit1 <- lm(addToCart ~ newUsers, dataMerged)
+
+#model evaluation
 summary(fit1)
-
-RMSE <- function(error) { sqrt(mean(error^2)) }
 RMSE(fit1$residuals)
-
-mae <- function(error) { mean(abs(error)) }
 mae(fit1$residuals)
 
+# ------------------------------------------------------------------------
+# Prediction with total merged data
+# ------------------------------------------------------------------------
+
+#prediction
 set.seed(23)
-newNewUsers = data.frame(newUsers = c(927))
+newNewUsers = data.frame(newUsers = c(408,936))
 round(predict(fit1, newNewUsers , interval = 'prediction'))
 round(predict(fit1, newNewUsers , interval = 'confidence'))
 
 plot(dataMerged$addToCart,col="blue",type="l")
 lines(fit1$fitted.values,col="red")
-
-#opnieuw proberen met outliers eruit te halen!!!!!
-
 
 # ------------------------------------------------------------------------
 # Correlation August 2018
