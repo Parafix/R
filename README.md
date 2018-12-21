@@ -11,20 +11,20 @@ Script: Predict needed reach based on desired clicks and real historic reach dat
 
 # Google Analytics - Seasonality
 Script: Check correlation + cross lag impact, decompose trends & seasonality, forecast traffic & show causal impact
-<br>Model: accurancy to check
+<br>Model: accuracy to check
 <br>Focus: done
 
 # Google Analytics - Day type corr
 Script: Impact of type of day on Revenue - days like: day of week, holiday, closing days, ...
-<br>Model: accurancy to check
+<br>Model: accuracy to check
 <br>Focus: done
 
 # Google Analytics - Next Best Content by Page
 Script: Market basket analysis based on combined page visits per session (optional: per user-id or client-id)
-<br>Model: accurancy to check
+<br>Model: accuracy to check
 <br>Focus: done
 
 # Weather & Google Analytics - Impact of weather
 Script: Correlation & prediction of outcome based on weather data & Google Analytics goals
-<br>Model: accurancy is not good
+<br>Model: accuracy to check - outliers detection needs to be better
 <br>Focus: on-going
