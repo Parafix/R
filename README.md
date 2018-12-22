@@ -5,8 +5,8 @@ Statistics & Data Science related scripts
 <br>Questions, bugs or requests: dries@driesbultynck.be or dries@parafix.io
 
 # Facebook algorithm impact prediction
-Script: Predict needed reach based on desired clicks and real historic reach data from past reach campaigns.
-<br>Model: link clicks models is accurate
+Script: Predict needed reach based on desired clicks and real historic reach data from past reach campaigns as potential reach indicated by Facebook isn't trust worthy and doesn't allow brands to really invest in market share as they aim to do (TV budget -> GRP build-up vs online budget -> reach build-up).
+<br>Model: link clicks models is accurate - first screening: avg. of 6x budget needed to possibly reach the effective potential reach
 <br>Focus: done
 
 # Google Analytics - Seasonality
