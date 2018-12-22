@@ -28,3 +28,8 @@ Script: Market basket analysis based on combined page visits per session (option
 Script: Correlation & prediction of outcome based on weather data & Google Analytics goals
 <br>Model: accuracy to check - outliers detection needs to be better -> capping datapoints
 <br>Focus: on-going
+
+# Share of ... & Google Analytics - Channel focus
+Script: Vizualisation of channels & share of total based on sessions, transactions, revenue and more
+<br>Model: no model
+<br>Focus: forecasting scenarios with conversion rates etc. or attribution depending on focus
