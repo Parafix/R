@@ -26,5 +26,5 @@ Script: Market basket analysis based on combined page visits per session (option
 
 # Weather & Google Analytics - Impact of weather
 Script: Correlation & prediction of outcome based on weather data & Google Analytics goals
-<br>Model: accuracy to check - outliers detection needs to be better
+<br>Model: accuracy to check - outliers detection needs to be better -> capping datapoints
 <br>Focus: on-going
