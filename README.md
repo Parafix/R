@@ -33,3 +33,8 @@ Script: Correlation & prediction of outcome based on weather data & Google Analy
 Script: Vizualisation of channels & share of total based on sessions, transactions, revenue and more
 <br>Model: no model
 <br>Focus: forecasting scenarios with conversion rates etc. or attribution depending on focus
+
+# Channel Attribution & Google Analytics
+Script: Basic channel attribution 
+<br>Model: no model
+<br>Focus: order & export needed to tie to budgets
