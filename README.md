@@ -56,3 +56,9 @@ Script: Basic density & facet mapping of data
 <br>Technique: none
 
 # Ideas
+- Colour codes for graphs based upon book of leila
+- Types of graphs based upon book of leila
+- Make functions for packages to load, handling data, etc.
+- Make markdown of graphs or specific scripts for reporting in pdf 
+- Make custom reporting for GA on metrics that really matter - conversion rates, spend/return, weighted, etc.
+- Make several machine learning template according to supervised or unsupervised techniques 
