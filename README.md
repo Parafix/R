@@ -4,6 +4,10 @@ Statistics & Data Science related scripts
 <br>Language: English
 <br>Questions, bugs or requests: dries@driesbultynck.be or dries@parafix.io
 
+## Google Analytics - Settings
+Script: get an overview of all the accounts, profiles and views with their filters, custom dimensions & custom metrics
+<br>Focus: needs some work
+
 ## Machine Learning Template
 Basic template for machine learning applications and needed/possible steps. Clean sheet.
 
