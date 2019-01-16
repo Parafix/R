@@ -45,4 +45,10 @@ Script: Basic channel attribution
 <br>Focus: order & export needed to tie to budgets
 <br>Technique: Markov
 
+## GIS & Data
+Script: Basic density & facet mapping of data
+<br>Model: no model
+<br>Focus: clean up, more examples, better viz
+<br>Technique: none
+
 # Ideas
