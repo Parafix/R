@@ -61,7 +61,9 @@ Script: Basic density & facet mapping of data
 - Make functions for packages to load, handling data, etc.
 - Make markdown of graphs or specific scripts for reporting in pdf 
 - Make custom reporting for GA on metrics that really matter - conversion rates, spend/return, weighted, etc.
-- Make several machine learning template according to supervised or unsupervised techniques 
+- Make several machine learning template according to supervised or unsupervised techniques
+- Neural network training with tensorflow + output in xls or api? 
+- Pipeline management from input, model, output into working environment/database with R or Python
 
 # Services 
 - Make the general analytical marketeer and/or its reporting obsolete for GA
