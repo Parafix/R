@@ -12,11 +12,13 @@
 # https://www.jessesadler.com/post/gis-with-r-intro/
 # https://mhermans.net/files/r/be_geomapping/20170226_example_mapping_postcode.html
 # http://www.bnosac.be/index.php/blog/55-belgiummaps-statbel-r-package-with-administrative-boundaries-of-belgium
+# https://www.r-bloggers.com/belgiummaps-statbel-r-package-with-administrative-boundaries-of-belgium/
 # https://pakillo.github.io/R-GIS-tutorial/#spatial
 # https://geocompr.robinlovelace.net/spatial-class.html
 # https://geocompr.robinlovelace.net/adv-map.html
 # https://www.jessesadler.com/post/geocoding-with-r/
 # https://github.com/dkahle/ggmap
+# https://developers.google.com/analytics/devguides/reporting/realtime/dimsmets/geonetwork <- !!!
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
@@ -33,7 +35,7 @@ setwd('/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/')
 install.packages("install.load")
 library("install.load")
 install_load("devtools","googleAuthR","googleAnalyticsR","ggplot2","ggthemes","scales","plyr","lubridate","reshape2","TTR","forecast","tidyr","CausalImpact","dplyr","formatR","corrplot","Hmisc", "openxlsx")
-install_load("magrittr","leaflet","rworldmap")
+install_load("magrittr","leaflet","rworldmap","sp","leaflet")
 install.packages("BelgiumMaps.StatBel", repos = "http://www.datatailor.be/rcube", type = "source")
 library(BelgiumMaps.StatBel)
 install_github("dkahle/ggmap", force=TRUE)
@@ -53,6 +55,13 @@ dfPABWL[is.na(dfPABWL)] <- 0
 dfLocations <- dfBelgium %>% select(V2,V1,V3,V4) %>% filter(V1 %in% dfPABWLE$Postcode)
 colnames(dfPABWLE)[1] <- "V1"
 temp <- inner_join(dfLocations,dfPABWLE, by=c("V1"))
+
+data(BE_ADMIN_BELGIUM)
+data(BE_ADMIN_PROVINCE)
+data(BE_ADMIN_REGION)
+plot(BE_ADMIN_REGION, lwd = 1)
+plot(BE_ADMIN_PROVINCE, lwd = 1)
+plot(BE_ADMIN_BELGIUM, lwd = 1)
 
 #leaflet() %>% addTiles() %>% addMarkers(dfLocations, lng=~V3, lat=~V4)
 
