@@ -55,6 +55,18 @@ Script: Basic density & facet mapping of data
 <br>Focus: clean up, more examples, better viz
 <br>Technique: none
 
+## Media & Google Analytics
+Script: Export & graph of campaign stats per day, week, month, quarter, year ... based on labeling
+<br>Model: no model
+<br>Focus: test + needs weighted averages
+<br>Technique: none
+
+## Data Quality Diagnoes & Google Analytics
+Script: Explore data quality & distribution
+<br>Model: no model
+<br>Focus: test
+<br>Technique: none
+
 # Ideas
 - Colour codes for graphs based upon book of leila
 - Types of graphs based upon book of leila
