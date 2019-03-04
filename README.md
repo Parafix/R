@@ -67,6 +67,12 @@ Script: Explore data quality & distribution
 <br>Focus: test
 <br>Technique: none
 
+## Distribution of Page Depth & Google Analytics
+Script: Graph of distribution by pageDepth (converters vs non-converters) to initiate behavioural segmentation
+<br>Model: no model
+<br>Focus: turn into segments
+<br>Technique: k-means? or weighted return on pageDepth?
+
 # Ideas
 - Colour codes for graphs based upon book of leila
 - Types of graphs based upon book of leila
