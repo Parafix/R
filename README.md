@@ -56,7 +56,7 @@ Script: Basic density & facet mapping of data
 <br>Technique: none
 
 ## Media & Google Analytics
-Script: Export & graph of campaign stats per day, week, month, quarter, year ... based on labeling
+Script: Export & graph of campaign stats per day, week, month, quarter, year ... based on labeling with custom reporting by metrics liek conversion rates, spend/return, weighted values, etc.
 <br>Model: no model
 <br>Focus: graphs
 <br>Technique: none
@@ -73,17 +73,29 @@ Script: Graph of distribution by pageDepth (converters vs non-converters) to ini
 <br>Focus: turn into segments
 <br>Technique: k-means? or weighted return on pageDepth?
 
+## Time normalized impact of Campaigns & Google Analytics
+Script: Graph cumul impact by campaign over time
+<br>Model: no model
+<br>Focus: /
+<br>Technique: time normalization
+
+## Time normalized impact of landing pages & Google Analytics
+Script: Graph cumul impact by landing page over time
+<br>Model: no model
+<br>Focus: /
+<br>Technique: time normalization
+
+
 # Ideas
 - Colour codes for graphs based upon book of leila
 - Types of graphs based upon book of leila
-- Make functions for packages to load, handling data, etc.
 - Make markdown of graphs or specific scripts for reporting in pdf 
-- Make custom reporting for GA on metrics that really matter - conversion rates, spend/return, weighted, etc.
 - Anomaly detection on sessions or days of year over one year to make campaigns accountable or detected spam issues
 - Make several machine learning template according to supervised or unsupervised techniques
 - K-means clustering on user-id, session-id, urls, ...
 - Neural network training with tensorflow + output in xls or api? 
 - Pipeline management from input, model, output into working environment/database with R or Python
+- Make functions for packages to load, handling data, etc.
 
 
 # Services 
