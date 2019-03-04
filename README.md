@@ -58,7 +58,7 @@ Script: Basic density & facet mapping of data
 ## Media & Google Analytics
 Script: Export & graph of campaign stats per day, week, month, quarter, year ... based on labeling
 <br>Model: no model
-<br>Focus: test + needs weighted averages
+<br>Focus: graphs
 <br>Technique: none
 
 ## Data Quality Diagnoes & Google Analytics
