@@ -85,6 +85,11 @@ Script: Graph cumul impact by landing page over time
 <br>Focus: /
 <br>Technique: time normalization
 
+## SEO Screening via ML
+Script: GA & Screaming frog merged data with rapid clustering for top problem detection
+<br>Model: k-means on sessions & url part detection per cluster for priority definition
+<br>Focus: topic modeling & NLP for clustering on entity and context -> labeling
+<br>Technique: k-means
 
 # Ideas
 - Colour codes for graphs based upon book of leila
