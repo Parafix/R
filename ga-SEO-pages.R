@@ -14,6 +14,8 @@
 # https://www.r-bloggers.com/k-means-clustering-in-r/
 # https://stackoverflow.com/questions/15376075/cluster-analysis-in-r-determine-the-optimal-number-of-clusters
 # https://uc-r.github.io/kmeans_clustering
+# https://kkulma.github.io/2017-04-24-determining-optimal-number-of-clusters-in-your-data/
+# https://stackoverflow.com/questions/37765778/multiple-values-returned-when-using-elbow-method-to-find-the-number-of-clusters
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
@@ -46,31 +48,6 @@ gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
 # ------------------------------------------------------------------------
 # FUNCTIONS
 # ------------------------------------------------------------------------
-
-colnames_to_numeric <- function(df) {
-  for (i in colnames(df)){
-    colname <- colnames(df[i])
-    #if(!is.numeric(colname))
-    df[[colname]] <- as.numeric(df[[colname]])
-  }
-}
-
-colnames_to_character <- function(df) {
-  for (i in colnames(df)){
-    colname <- colnames(df[i])
-    #if(!is.numeric(colname))
-    df[[colname]] <- as.character(df[[colname]])
-  }
-}
-
-elbow.k <- function(df){
-  dist.obj <- dist(df)
-  hclust.obj <- hclust(dist.obj)
-  css.obj <- css.hclust(dist.obj,hclust.obj)
-  elbow.obj <- elbow.batch(css.obj)
-  k <- elbow.obj$k
-  return(k)
-}
 
 # ------------------------------------------------------------------------
 # THEMES & PALETTES
@@ -105,12 +82,12 @@ palette_wijs <- colorRampPalette(c("#FF4040", "#DEECFF", "#1C31CC"))(20)
 
 col_wijs_lb = c("#DEECFF")
 col_wijs_db = c("#1B31CC")
-col_wij_db2 = c("#1C31CC")
+col_wijs_db2 = c("#1C31CC")
 col_wijs_r = c("#FF4040")
 
 
 # ------------------------------------------------------------------------
-# Import data
+# IMPORT DATA
 # ------------------------------------------------------------------------
 
 ga_auth(new_user = TRUE)
@@ -141,6 +118,9 @@ dfSFPages$Address <- tolower(dfSFPages$Address)
 #str(dfSFPages)
 #dfSFPages <- data.frame(lapply(dfSFPages, as.character), stringsAsFactors=FALSE)
 
+#TODO eruit filteren op deel van url, vb: blog
+#TODO: eruit filteren subdomainen 
+
 dfSFPages$Address <- unlist(sapply(strsplit(dfSFPages$Address, "\\www.avogel.be"), tail, 1),use.names=FALSE)
 names(dfSFPages)[1]<-"landingPagePath"
 
@@ -160,36 +140,46 @@ dfClusterOnVolume <- dfMerged %>%
 dfScaledOnVolume <- dfClusterOnVolume
 dfScaledOnVolume$sessions <- scale(dfClusterOnVolume$sessions, center = TRUE, scale = TRUE)
 
+#TODO: uitschieters eruit halen met hulp van verschil in lag!
+#uitschieters oplijsten mss in lijstje? - kunnen die gekleurd worden in de excel file? of in aparte tab eruit gefiltered van de totale rest, diegene met clusters
+
 # scale data for elbow method
 set.seed(123)
 k.max <- 50
 dfClusteredOnVolumeTemp <- sapply(1:k.max, function(k){kmeans(dfScaledOnVolume$sessions, k, nstart=50,iter.max=15)$tot.withinss})
-plot(1:k.max, dfClusteredOnVolumeTemp,type="b", pch = 19, frame = FALSE, xlab="Number of clusters K", ylab="Total within-clusterssum of squares")
+#plot(1:k.max, dfClusteredOnVolumeTemp,type="b", pch = 19, frame = FALSE, xlab="Number of clusters K", ylab="Total within-clusterssum of squares")
+
+dfDifference = dfClusteredOnVolumeTemp - lag(dfClusteredOnVolumeTemp)
+k <- min(which(na.omit(dfDifference < lag(dfDifference)) == TRUE)) + 1
 
 set.seed(234)
-dfClusteredOnVolume <- kmeans(dfScaledOnVolume$sessions,8, nstart=50)
+dfClusteredOnVolume <- kmeans(dfScaledOnVolume$sessions,k, nstart=50) #k -> calc via elbow method or manual
 dfClusteredOnVolume$cluster <- as.factor(dfClusteredOnVolume$cluster)
 ggplot(dfClusterOnVolume, aes(id, sessions, color = dfClusteredOnVolume$cluster)) + geom_point() +
   labs(color="Cluster")
 
+#dfClusteredOnVolume$centers
+#dfClusteredOnVolume$size
 #order(dfClusteredOnVolume$centers)
 # opletten met ID voor matching!
 
 prio <- toString(order(dfClusteredOnVolume$centers))
+firstPrio <- order(dfClusteredOnVolume$centers)[1]
 
 dfClusterOnVolume$cluster <- dfClusteredOnVolume$cluster
 dfMerged$cluster <- dfClusterOnVolume$cluster
 
-names(dfMerged)[67] <- paste("Cluster - Sessions - Prio:", prio)
-
+#names(dfMerged)[67] <- paste("Cluster - Sessions - Prio:", prio)
 
 # -----------------------------------------------------------------------------
 # MACHINE LEARNING - UNSUPERVISED - (SUB)CLUSTERING BASED ON TEXT PATTERNS & WEIGHTS
 # -----------------------------------------------------------------------------
 
+names(dfMerged)[67] <- "clusters"
+
 dfLPPALL <- dfMerged %>% 
-  dplyr::select(id, landingPagePath, `Cluster - Sessions - Prio: 3, 8, 2, 4, 7, 1, 6, 5`) %>%
-  filter(`Cluster - Sessions - Prio: 3, 8, 2, 4, 7, 1, 6, 5`==8)
+  dplyr::select(id, landingPagePath, clusters) %>%
+  filter(clusters==firstPrio)
 
 dfLPPAll <- gsub("[?&/=]"," ", dfLPPALL$landingPagePath)
 
@@ -201,7 +191,7 @@ cLPP <- tm_map(cLPP, removePunctuation)
 cLPP <- tm_map(cLPP, stripWhitespace)
 cLPP <- tm_map(cLPP, removeNumbers)
 cLPP <- tm_map(cLPP, removeWords, stopwords("dutch"))
-cLPP <- tm_map(cLPP, stemDocument, language = "dutch")
+#cLPP <- tm_map(cLPP, stemDocument, language = "dutch")
 
 dtm <- DocumentTermMatrix(cLPP)
 mdtm <- as.matrix(dtm)
@@ -210,16 +200,16 @@ frequency <- colSums(mdtm)
 frequency <- sort(frequency, decreasing = TRUE)
 
 words <- names(frequency)
-wordcloud(words[1:50],frequency[1:50])
+#wordcloud(words[1:50],frequency[1:50],col=palette_wijs)
 
 barplot(frequency[1:50], las = 2, 
         names.arg = words[1:50],
-        col ="lightblue", main ="Most frequent words",
+        col = palette_wijs, main ="Most frequent words",
         ylab = "Word frequencies")
 
-findAssocs(dtm, terms = "webwinkel", corlimit = 0.2)
-findAssocs(dtm, terms = "productsearch", corlimit = 0.2)
-findAssocs(dtm, terms = "rows", corlimit = 0.2)
+#findAssocs(dtm, terms = "webwinkel", corlimit = 0.2)
+#findAssocs(dtm, terms = "productsearch", corlimit = 0.2)
+#findAssocs(dtm, terms = "rows", corlimit = 0.2)
 
 
 # -----------------------------------------------------------------------------
@@ -258,5 +248,8 @@ findAssocs(dtm, terms = "rows", corlimit = 0.2)
 # EXPORT
 # ------------------------------------------------------------------------
 
+names(dfMerged)[67] <- paste("Cluster - Sessions - Prio:", prio)
 write.xlsx(dfMerged, paste(gaClient,"-",gaViewName,"-SE0-Pages-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
+dev.copy(png, paste(gaClient,"-",gaViewName,"-SE0-Plot-Cluster-",firstPrio,".png", sep=""),width=2048,height=1536,res=72)
+dev.off()
 

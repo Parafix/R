@@ -22,15 +22,7 @@
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
-# Variables & settings
-# ------------------------------------------------------------------------
-#set writing directory
-setwd('/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/')
-#rm(list=ls())
-#dev.off()
-
-# ------------------------------------------------------------------------
-# Packages
+# PACKAGES
 # ------------------------------------------------------------------------
 install.packages("install.load")
 library("install.load")
@@ -41,27 +33,106 @@ library(BelgiumMaps.StatBel)
 install_github("dkahle/ggmap", force=TRUE)
 library("ggmap")
 
+
 # ------------------------------------------------------------------------
-# Import data
+# VARIABLES & SETTINGS
+# ------------------------------------------------------------------------
+#set writing directory
+setwd('/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/')
+#rm(list=ls())
+#dev.off()
+
+gaClient <- "AVogel"
+gaViewName <- "Master"
+gaViewId <- "2897692"
+gaDateRange <- c("2018-01-01","2018-12-31")
+gaDimensions <- c("month","city","latitude","longitude") #,"deviceCategory", sourceMedium, pagePath, month, year
+gaMetrics <- c("sessions","percentNewSessions","pageviews","entrances","exitRate","exits","bounces","bounceRate","pageValue","transactions") #exitPagePath, sessions, newUsers",goal2Completions,transactions
+gaDelta <- order_type("date","ASCENDING", "DELTA")
+#gaDimFilterSourceMedium <- dim_filter("sourceMedium","REGEXP","organic|direct")
+#gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
+gaMetFilterTransactions <- met_filter("transactions", "GREATER", 0)
+gaMetFilters <- filter_clause_ga4(list(gaMetFilterTransactions))
+
+
+# ------------------------------------------------------------------------
+# THEMES & PALETTES
 # ------------------------------------------------------------------------
 
+theme_wijs <- theme(
+  plot.title = element_text(colour=c("#1B31CC"),face="bold",size=rel(1.5),hjust = 0.1,vjust=-20),
+  plot.subtitle = element_text(colour=c("#1C31CC"),face="plain",size=rel(1.2),hjust = 0.1,vjust=-20),
+  plot.caption = element_text(colour=c("#1C31CC"),face="plain",size=rel(1)),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank(),
+  panel.border = element_blank(),
+  axis.title.x = element_text(colour=c("#1C31CC")),
+  axis.title.y = element_text(colour=c("#1C31CC")),
+  axis.text.x = element_text(colour=c("#1C31CC")),
+  axis.text.y = element_text(colour=c("#1C31CC")),
+  axis.line = element_line(colour=c("#1B31CC")),
+  axis.ticks = element_line(colour=c("#1B31CC")),
+  legend.title = element_text(colour=c("#1B31CC"),face="plain",size=rel(1.2)),
+  legend.text = element_text(colour=c("#1C31CC")),
+  legend.position = "right",
+  legend.box = "vertical"
+  #DEECFF lichtblauw
+  #1B31CC donkerblauw
+  #1C31CC donkerblauw 2
+  #FF4040 rood
+)
+options(scipen=999)  # turn-off scientific notation like 1e+48
+
+palette_wijs <- colorRampPalette(c("#FF4040", "#DEECFF", "#1C31CC"))(20)
+
+col_wijs_lb = c("#DEECFF")
+col_wijs_db = c("#1B31CC")
+col_wijs_db2 = c("#1C31CC")
+col_wijs_r = c("#FF4040")
+
+
+# ------------------------------------------------------------------------
+# IMPORT DATA
+# ------------------------------------------------------------------------
+
+#Google Analytics
+ga_auth(new_user = TRUE)
+#meta <- google_analytics_meta()
+gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, met_filters = gaMetFilters, anti_sample = TRUE)
+
+#Excel
 dfBelgium = read.csv("zipcode-belgium.csv", header = FALSE)
 dfPABWL = read.xlsx("2018-postcodes-of-Wallonian-pharmacists.xlsx")
 dfPABWLE = read.xlsx("2018-postcodes-of-Wallonian-pharmacists-Echinaforce.xlsx")
+dfPAB = read.xlsx("2018-postcodes-of-biorhorma-pharmacists.xlsx")
+
+
+# ------------------------------------------------------------------------
+# DATA HANDLING
+# ------------------------------------------------------------------------
+
+dfPAB$postcode <- as.numeric(dfPAB$postcode)
 
 dfPABWLE[is.na(dfPABWLE)] <- 0
 dfPABWL[is.na(dfPABWL)] <- 0
+dfPAB[is.na(dfPAB)] <- 0
 
-dfLocations <- dfBelgium %>% select(V2,V1,V3,V4) %>% filter(V1 %in% dfPABWLE$Postcode)
-colnames(dfPABWLE)[1] <- "V1"
-temp <- inner_join(dfLocations,dfPABWLE, by=c("V1"))
+dfLocations <- dfBelgium %>% select(V2,V1,V3,V4) %>% filter(V1 %in% dfPAB$postcode)
+colnames(dfPAB)[1] <- "V1"
+temp <- inner_join(dfLocations,dfPAB, by=c("V1"))
 
-data(BE_ADMIN_BELGIUM)
-data(BE_ADMIN_PROVINCE)
-data(BE_ADMIN_REGION)
-plot(BE_ADMIN_REGION, lwd = 1)
-plot(BE_ADMIN_PROVINCE, lwd = 1)
-plot(BE_ADMIN_BELGIUM, lwd = 1)
+
+# ------------------------------------------------------------------------
+# VISUALIZATION
+# ------------------------------------------------------------------------
+
+# data(BE_ADMIN_BELGIUM)
+# data(BE_ADMIN_PROVINCE)
+# data(BE_ADMIN_REGION)
+# plot(BE_ADMIN_REGION, lwd = 1)
+# plot(BE_ADMIN_PROVINCE, lwd = 1)
+# plot(BE_ADMIN_BELGIUM, lwd = 1)
 
 #leaflet() %>% addTiles() %>% addMarkers(dfLocations, lng=~V3, lat=~V4)
 
@@ -77,8 +148,21 @@ plot(BE_ADMIN_BELGIUM, lwd = 1)
 #map <- get_map("Belgium", zoom = 4)
 #mapPoints <- ggmap(map) + geom_point(aes(x = V3, y = V4, size = sqrt(dfLocations)), data = dfLocations, alpha = .5)
 
-
+#plot locations
 qmplot(V3,V4,data=dfLocations, maptype = "toner-background", color = I("red"), geom = "density2d")
+
+#plot density of biohorma pharmacists
+qmplot(V3,V4,data=temp, geom = "blank", zoom = 9, maptype = "toner-lite", legend = "topleft") + 
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = .3, color = NA) + 
+  scale_fill_gradient2("Biohorma Propensity", low = "white", mid = "yellow", high = "red", midpoint = 0)
+
+#plot density of orders by biohorma pharmacists
+qmplot(V3,V4,data=temp, maptype = "toner", color=I("red2"), geom = "density2d")
+qmplot(V3,V4,data=temp, maptype = "toner", color=I("red2"), geom = "density2d") + facet_wrap(~ pharmacists) + theme(panel.spacing = unit(1, "lines"))
+qmplot(V3,V4,data=temp, maptype = "toner", color=I("red2"), size=pharmacists, zoom=10) + facet_wrap(~ pharmacists) + theme(panel.spacing = unit(1, "lines"))
+
+
+
 
 tempZonderO <- temp %>% filter(Bestelden > 0)
 qmplot(V3,V4,data=tempZonderO, maptype = "toner", color=Bestelden, size=Bestelden.Echinaforce) 
@@ -137,3 +221,13 @@ qmplot(V3,V4,data=tempEnkelEchinaforce, geom = "blank", zoom = 9, maptype = "ton
 #dfLonLat <- geocode(paste(dfLocations$municipality_nis_label_nl, dfLocations$postcode), output="latlon", source="google", client="AIzaSyBd8_0R0g41ZeHlh4KL71IYFXV1xqzuxKg", signature = "AIzaSyBd8_0R0g41ZeHlh4KL71IYFXV1xqzuxKg")
 #geocodeQueryCheck(userType = "free")
 #str(geocode("Baylor University", output = "all"))
+
+
+
+# ------------------------------------------------------------------------
+# EXPORT
+# ------------------------------------------------------------------------
+
+#write.xlsx(dfMerged, paste(gaClient,"-",gaViewName,"-SE0-Pages-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
+#dev.copy(png, paste(gaClient,"-",gaViewName,"-SE0-Plot-Cluster-",firstPrio,".png", sep=""),width=2048,height=1536,res=72)
+#dev.off()
