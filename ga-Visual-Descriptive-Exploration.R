@@ -1,11 +1,12 @@
 # ------------------------------------------------------------------------
-# Descriptive analytics - Distribution of page depth
+# Descriptive analytics
 #
 # R Statistics & Data Science related scripts for Marketing Analytics purposes
 # Language: English
 # Code by Dries Bultynck
 # Questions, bugs & requests: dries@driesbultynck.be or dries@parafix.io
 # References:
+# 
 # https://flowingdata.com/2012/05/15/how-to-visualize-and-compare-distributions/
 # ------------------------------------------------------------------------
 
@@ -13,8 +14,16 @@
 # PACKAGES
 # ------------------------------------------------------------------------
 install.packages("install.load")
-library(install.load)
-install_load("devtools","googleAuthR","googleAnalyticsR","tidyverse","kableExtra","scales","plotly","ggthemes","dplyr","lubridate","openxlsx","corrplot","dlookr","Hmisc","SDMTools","ggridges")
+library("install.load")
+install_load("devtools")
+install_load("dlookr")
+install_github('jburkhardt/RAdwords')
+install_load("googleAuthR","googleAnalyticsR","RAdwords")
+install_load("ggplot2","ggthemes","scales","ggridges","plotly")
+install_load("plyr","lubridate","reshape2","tidyr","dplyr","kableExtra")
+install_load("TTR","forecast","CausalImpact","formatR","corrplot","Hmisc","SDMTools")
+install_load("fpc","cluster","tm","wordcloud")
+install_load("openxlsx","readxl")
 
 # ------------------------------------------------------------------------
 # VARIABLES & SETTINGS
@@ -22,18 +31,18 @@ install_load("devtools","googleAuthR","googleAnalyticsR","tidyverse","kableExtra
 directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
 setwd(directory)
 
-gaClient <- "DVV"
-gaViewName <- "2015"
-gaViewId <- "95326124"
-gaDateRange <- c("2019-01-01","2019-05-12")
-gaDimensions <- c("channelGrouping","pageDepth")
-gaMetrics <- c("sessions","goal4Completions")
+gaClient <- "AVogel"
+gaViewName <- "Master"
+gaViewId <- "2897692"
+gaDateRange <- c("2018-01-01","2018-12-31")
+gaDimensions <- c("pageDepth")
+gaMetrics <- c("sessions","percentNewSessions","pageviews","entrances","exitRate","exits","bounces","bounceRate","pageValue","transactions")
 #gaDelta <- order_type("date","ASCENDING", "DELTA")
 #gaDimFilterSourceMedium <- dim_filter("sourceMedium","REGEXP","cpc")
 #gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
-gaMetFilterGoal <- met_filter("goal13Completions", "GREATER", 0)
-#gaMetFilterGoal <- met_filter("goal4Completions", "EQUAL", 0)
-gaMetFilters <- filter_clause_ga4(list(gaMetFilterGoal))
+#gaMetFilterGoal <- met_filter("goal13Completions", "GREATER", 0)
+#gaMetFilterGoal <- met_filter("goal13Completions", "EQUAL", 0)
+#gaMetFilters <- filter_clause_ga4(list(gaMetFilterGoal))
 
 
 # ------------------------------------------------------------------------
@@ -72,18 +81,18 @@ options(scipen=999)  # turn-off scientific notation like 1e+48
 
 palette_wijs <- colorRampPalette(c("#FF4040", "#DEECFF", "#1C31CC"))(20)
 
+col_wijs_lb = c("#DEECFF")
+col_wijs_db = c("#1B31CC")
+col_wijs_db2 = c("#1C31CC")
+col_wijs_r = c("#FF4040")
+
 # ------------------------------------------------------------------------
 # IMPORT DATA
 # ------------------------------------------------------------------------
 
 ga_auth(new_user = TRUE)
 #meta <- google_analytics_meta()
-gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, met_filters = gaMetFilters, anti_sample = TRUE)
-
-#assisted can't be linked on a daily basis (misses the point of attribution) or can't be linked per campaign -> G UI shows aggragate <> API possibilities 
-#gaDataAssisted <- google_analytics_3(gaViewId,start = gaDateRange[1], end = gaDateRange[2], metrics = c("totalConversions","totalConversionValue"), dimensions = c("nthDay","campaignPath"), filters = "mcf:conversionType==Transaction", type="mcf")
-
-
+gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, anti_sample = TRUE)
 
 # ------------------------------------------------------------------------
 # DATA HANDLING
@@ -97,36 +106,50 @@ gaDataDistriDepth <- gaDataDistri %>%
   arrange(as.numeric(pageDepth)) %>%
   subset(as.numeric(pageDepth) < 101)
 
-gaDataDistriDepth <- as.data.frame(gaDataDistriDepth)
 gaDataDistriDepth[is.na(gaDataDistriDepth)] <- 0
 
 gaDataDistriDepth <- gaDataDistriDepth %>%
   group_by(pageDepth) %>%
-  mutate(All = sum(`1. AdWords`,`2. Affiliate`,`3. Organisch`,`4. Direct`,`5. Bannering`, REF))
-  #mutate(All = sum(`1. AdWords`,`2. Affiliate`,`3. Organisch`,`4. Direct`,`5. Bannering`,`6. INT_Dropout_mail`,`7. SOCIAL_Advertentie`,`8. INT_nieuwsbrief`, INT_Email, REF))
-  #mutate(All = sum(Affiliate, Direct, Display, Referral, Social,`Organic Search`,`Paid Search`,`(Other)`))
+  mutate(All = sum(Affiliate, Direct, Display, Referral, Social,`Organic Search`,`Paid Search`,`(Other)`))
 
 par(mfrow=c(1,1))
 #plot(gaDataDistriDepth$pageDepth,gaDataDistriDepth$All, type="l",col=c("#FF4040"),lwd=2, pch=19)
 #plot(gaDataDistriDepth$pageDepth,gaDataDistriDepth$Affiliate)
 #plot(gaDataDistriDepth$pageDepth,gaDataDistriDepth$Direct)
 
-#no leads
-barplot(gaDataDistriDepth$All,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth - No Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`1. AdWords`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Adwords) - No Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`2. Affiliate`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Affiliate) - No Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`3. Organisch`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Organic) - No Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`4. Direct`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Direct) - No Auto lead", xlab="pageDepth", ylab="Sessions")
+# ------------------------------------------------------------------------
+# SCATTERPLOT
+# ------------------------------------------------------------------------
 
-#wel leads
-barplot(gaDataDistriDepth$All,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth - Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`1. AdWords`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Adwords) - Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`2. Affiliate`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Affiliate) - Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`3. Organisch`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Organic) - Auto lead", xlab="pageDepth", ylab="Sessions")
-barplot(gaDataDistriDepth$`4. Direct`,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth (Direct) - Auto lead", xlab="pageDepth", ylab="Sessions")
+# ------------------------------------------------------------------------
+# STATISTICS
+# ------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
+# DISTRIBUTION
+# ------------------------------------------------------------------------
+
+dev.off()
+par(mfrow=c(5,2))
+for(i in 1:11){
+  hist(gaData[,i])
+  print(i)
+}
+
+#viz
+barplot(gaDataDistriDepth$All,col=c("#FF4040"),names.arg=gaDataDistriDepth$pageDepth, main="Sessions per pageDepth - Not Account Completed", xlab="pageDepth", ylab="Sessions")
+
+# ------------------------------------------------------------------------
+# MACHINE LEARNING - CLASSIFICATION TREE
+# ------------------------------------------------------------------------
+
+
 
 # ------------------------------------------------------------------------
 # EXPORT
 # ------------------------------------------------------------------------
 
-write.xlsx(meta, "meta.xls", sep="")
+write.xlsx(dfMerged, paste(gaClient,"-",gaViewName,"-Descriptive-Exploration-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
+
+dev.copy(png, paste(gaClient,"-",gaViewName,"-Scatterplot.png", sep=""),width=2048,height=1536,res=72)
+dev.off()

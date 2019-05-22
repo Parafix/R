@@ -8,6 +8,7 @@
 # References:
 # https://www.rdocumentation.org/packages/googleAnalyticsR/versions/0.4.2/topics/filter_clause_ga4
 # https://a-little-book-of-r-for-time-series.readthedocs.io/en/latest/src/timeseries.html
+# https://rpubs.com/melike/corrplot
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
@@ -19,11 +20,35 @@ setwd('/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/')
 #dev.off()
 
 # ------------------------------------------------------------------------
-# Packages
+# PACKAGES
 # ------------------------------------------------------------------------
 install.packages("install.load")
 library("install.load")
-install_load("devtools","googleAuthR","googleAnalyticsR","ggplot2","ggthemes","scales","plyr","lubridate","reshape2","TTR","forecast","tidyr","CausalImpact","dplyr","formatR","corrplot","Hmisc")
+install_load("devtools","googleAuthR","googleAnalyticsR")
+install_load("ggplot2","ggthemes","scales")
+install_load("plyr","lubridate","reshape2","tidyr","dplyr")
+install_load("TTR","forecast","CausalImpact","formatR","corrplot","Hmisc")
+install_load("openxlsx","readxl")
+
+# ------------------------------------------------------------------------
+# FUNCTIONS
+# ------------------------------------------------------------------------
+cor.mtest <- function(mat, conf.level = 0.95){
+  mat <- as.matrix(mat)
+  n <- ncol(mat)
+  p.mat <- lowCI.mat <- uppCI.mat <- matrix(NA, n, n)
+  diag(p.mat) <- 0
+  diag(lowCI.mat) <- diag(uppCI.mat) <- 1
+  for(i in 1:(n-1)){
+    for(j in (i+1):n){
+      tmp <- cor.test(mat[,i], mat[,j], conf.level = conf.level)
+      p.mat[i,j] <- p.mat[j,i] <- tmp$p.value
+      lowCI.mat[i,j] <- lowCI.mat[j,i] <- tmp$conf.int[1]
+      uppCI.mat[i,j] <- uppCI.mat[j,i] <- tmp$conf.int[2]
+    }
+  }
+  return(list(p.mat, lowCI.mat, uppCI.mat))
+}
 
 # ------------------------------------------------------------------------
 # Import data
@@ -33,15 +58,20 @@ ga_auth(new_user = TRUE)
 
 #meta <- google_analytics_meta()
 
-gaViewId <- "97928845"
-gaDateRange <- c("2018-01-01","2018-12-15")
-gaDimensions <- c("date","channelGrouping") #,"deviceCategory", sourceMedium
+gaClient <- "DVV"
+gaViewName <- "2015"
+gaViewId <- "95326124" #DVV
+gaDateRange <- c("2019-01-01","2019-05-12")
+gaDimensions <- c("date","channelGrouping") #,"deviceCategory", channelGrouping
+#gaDimensions <- c("date","sourceMedium") #,"deviceCategory", channelGrouping
 #gaDimensions <- c("date","month","year")
-gaMetrics <- c("sessions","newUsers","goal2Completions", "transactions")
-#gaMetrics <- c("sessions","transactions","transactionRevenue")
+#gaMetrics <- c("sessions","newUsers", "transactions","transactionRevenue")
+gaMetrics <- c("sessions","newUsers","goal4Completions")
 gaDelta <- order_type("date","ASCENDING", "DELTA")
 #gaDimFilterUsertype <- dim_filter("userType","REGEXP","returning")
 #gaDimFilters <- filter_clause_ga4(list(gaDimFilterUsertype))
+#gaDimFilterSourceMedium <- dim_filter("sourceMedium","REGEXP","cpc|organic|direct|email|e-mail|newsletter")
+#gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
 
 #get data
 gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, anti_sample = TRUE)
@@ -50,21 +80,77 @@ gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetri
 colnames(gaData)
 #gaData <- gaData %>% select(1,25)
 #gaData <- gaData %>% select(25,2,9,22,26)
-names(gaData)[5]<-"addToCart"
+#names(gaData)[5]<-"addToCart"
 
-gaData <- gaData %>% select(date, channelGrouping, sessions) %>% spread(channelGrouping, sessions)
+#werkt niet
+# for(i in colnames(gaData)){
+#   count <- 1
+#   colName <- i
+#   if(c("email") %in% colName){
+#     colName <- gsub("email", "E", colName)
+#   }else if(c("organic") %in% colName){
+#     colName <- gsub("organic", "O", colName)
+#   }else if(c("cpc") %in% colName){
+#     colName <- gsub("cpc", "P", colName)
+#   }else if(c("direct") %in% colName){
+#     colName <- gsub("direct", "D", colName)
+#   }
+#   count <- count + 1
+#   names(gaData[count]) <- colName
+# }
+
+#gaData <- gaData %>% select(date, channelGrouping, transactions) %>% spread(channelGrouping, transactions)
+gaData <- gaData %>% dplyr::select(date, channelGrouping, sessions) %>% spread(channelGrouping, sessions)
+#gaData <- gaData %>% dplyr::select(date, sourceMedium, sessions) %>% spread(sourceMedium, sessions)
+#gaData <- gaData %>% dplyr::select(date, campaign, sessions) %>% spread(campaign, sessions)
+  
+#gaData <- gaData %>% group_by(channelGrouping) %>% summarise_all(sum)???
 
 gaData$date <- as.Date(gaData$date)
 gaData[is.na(gaData)] <- 0
 
 gaDataCor <- gaData[,-1]
 #pairs(gaDataCor)
-
-col<- colorRampPalette(c("red", "white", "blue"))(20)
-corrplot(cor(gaDataCor),method="number",col=col,type="upper", order="alphabet")
-
 cor(gaDataCor)
+
+plot.new()
+dev.off()
+col<- colorRampPalette(c("red", "white", "blue"))(20)
+corrplot(cor(gaData[,-1]),method="number",col=col,type="upper", order="alphabet")
+#dev.copy(png, paste(gaClient,"-COR-SourceMedium-plot",".png", sep=""),width=1024,height=768,res=72)
+#dev.off()
+
+# corrplot(cor(gaDataCor), method="color", col=col,  
+#          type="upper", order="hclust", 
+#          addCoef.col = "black", # Add coefficient of correlation
+#          # Combine with significance
+#          p.mat = p.mat, sig.level = 0.01, insig = "blank", 
+#          # hide correlation coefficient on the principal diagonal
+#          diag=FALSE 
+# )
+# 
+corGaData <- cor.mtest(gaDataCor,0.95)
+corrplot(cor(gaDataCor), method="color", col=col,
+         type="upper", order="hclust",
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=90, #Text label color and rotation
+         # Combine with significance
+         p.mat = corGaData[[1]], sig.level = 0.05, insig = "blank",
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE)
+
+# dev.off()
+# corrplot(cor(gaDataCor), method = "color", outline = T, addgrid.col = "darkgray", order="hclust", 
+#          addrect = 4, rect.col = "black", rect.lwd = 5,cl.pos = "b", tl.col = "indianred4", 
+#          tl.cex = 1.5, cl.cex = 1.5, addCoef.col = "white", 
+#          number.digits = 2, number.cex = 0.75, col = colorRampPalette(c("darkred","white","midnightblue"))(20))
+
+#write.xlsx(cor(gaDataCor), paste(gaClient,"-",gaViewName,"-COR-Campaigns-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
+
+
 cor.test(gaData$`Organic Search`,gaData$Direct)
+cor.test(gaData$`Paid Search`,gaData$Direct)
+cor.test(gaData$`Paid Search`,gaData$`Organic Search`)
 
 
 #plot(ecdf(gaData$`Transactions NL+FR`),xlab="sample of transactions")
@@ -73,11 +159,16 @@ plot(gaData$date,cumsum(gaData$`Organic Search`))
 plot(gaData$date,cumsum(gaData$Email))
 plot(gaData$date,cumsum(gaData$`Paid Search`), xlab="Jaar", ylab="Totaal aantal sessies via Paid Search")
 plot(gaData$date,cumsum(gaData$newUsers))
+plot(gaData$date,cumsum(gaData$transactions),type="l")
+
+ggplot(gaData, aes(x = gaData$date, y = sum(gaData$`Paid Search`) - cumsum(gaData$`Paid Search`))) + geom_line(aes(size=gaData$Direct,col=gaData$Direct))
+ggplot(gaData, aes(x = gaData$date, y = sum(gaData$Direct) - cumsum(gaData$Direct))) + geom_line(aes(size=gaData$`Paid Search`,col=gaData$`Paid Search`))
+ggplot(gaData, aes(x = gaData$date, y = sum(gaData$`Organic Search`) - cumsum(gaData$`Organic Search`))) + geom_line(aes(size=gaData$`Paid Search`,col=gaData$`Paid Search`))
 
 #ggplot() + geom_line(aes(x=gaData$years,y=cumsum(gaData$`Transactions NL+FR`),colour='red'))
 #+ geom_line(aes(x=gaData$years,y=cumsum(gaData$`Newsletter NL`),colour='blue')) 
 
-ggplot(gaData, aes(x = gaData$date, y = cumsum(gaData$`Paid Search`), color = gaData$`Paid Search`)) + geom_line()
+#ggplot(gaData, aes(x = gaData$week, y = cumsum(gaData$transactionRevenue), color=gaData$channelGrouping, size=gaData$transactionRevenue)) + geom_point()
 
 #gaDataSelected <- gaData
 #gaDataSelected <- gaData %>% 
@@ -88,7 +179,11 @@ ggplot(gaData, aes(x = gaData$date, y = cumsum(gaData$`Paid Search`), color = ga
 #rename columns
 #names(gaDataSelected)[2]<-"Other"
 #names(gaDataSelected)[6]<-"Organic"
-#names(gaDataSelected)[7]<-"Paid"
+#names(gaDataSelected)[8]<-"Paid"
+
+names(gaData)[2]<-"Other"
+names(gaData)[6]<-"Organic"
+names(gaData)[8]<-"Paid"
 
 # - GENERAL STATISTICS -------------------------------------------------------
 
@@ -282,3 +377,23 @@ ciModel <- gaDataSelectedXTS[, c("Organic","Paid","Direct")]
 impact <- CausalImpact(ciModel, pre.period, post.period)
 plot(impact)
 summary(impact,"report")
+
+
+
+#https://www.youtube.com/watch?v=GTgZfCltMm8
+
+library(xts)
+gaDataXTS <- xts(gaData[-1], order.by = as.Date(gaData$date), frequency = 365)
+
+library(CausalImpact)
+pre.period <- as.Date(c("2018-07-01","2018-09-30"))
+post.period <- as.Date(c("2018-10-01","2018-12-31"))
+
+## data in order of response, predictor1, predictor2, etc.
+ciModel <- gaDataXTS[, c("Paid","Organic","Direct")]
+
+impact <- CausalImpact(ciModel, pre.period, post.period)
+#impact <- CausalImpact(gaDataXTS, pre.period, post.period)
+plot(impact)
+
+print(impact)

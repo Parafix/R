@@ -10,31 +10,44 @@
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
-# VARIABLES & SETTINGS
-# ------------------------------------------------------------------------
-directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
-setwd(directory)
-
-gaViewId <- "2897692" #Avogel Master
-gaDateRange <- c("2018-01-01","2018-12-31")
-gaDimensions <- c("date","campaign")
-gaMetrics <- c("sessions","newUsers", "transactions","transactionRevenue")
-gaDelta <- order_type("date","ASCENDING", "DELTA")
-gaDimFilterSourceMedium <- dim_filter("sourceMedium","REGEXP","cpc")
-gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
-
-minSessions <- 2
-totalCampaignsSelected <- 25
-days_live_range <- 365
-
-
-
-# ------------------------------------------------------------------------
 # PACKAGES
 # ------------------------------------------------------------------------
 install.packages("install.load")
 library(install.load)
 install_load("devtools","googleAuthR","googleAnalyticsR","tidyverse","knitr","kableExtra","scales","plotly")
+
+# ------------------------------------------------------------------------
+# VARIABLES & SETTINGS
+# ------------------------------------------------------------------------
+directory = '/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/'
+setwd(directory)
+
+gaViewId <- "97928845" #Master overstock
+gaDateRange <- c("2018-01-01","2018-12-31")
+gaDimensions <- c("date","campaign")
+gaMetrics <- c("sessions","newUsers", "transactions","transactionRevenue")
+gaDelta <- order_type("date","ASCENDING", "DELTA")
+gaDimFilterSourceMedium <- dim_filter("campaign","REGEXP","")
+gaDimFilters <- filter_clause_ga4(list(gaDimFilterSourceMedium))
+
+minSessions <- 1 #sessies via google cpc op 1 jan als benchmark
+totalCampaignsSelected <- 10
+days_live_range <- 365
+
+# ------------------------------------------------------------------------
+# IMPORT DATA
+# ------------------------------------------------------------------------
+
+ga_auth(new_user = TRUE)
+#meta <- google_analytics_meta()
+
+#get data
+gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, dim_filters = gaDimFilters, anti_sample = TRUE)
+
+#deleted (not set)
+gaData <- subset(gaData, gaData$campaign!="(not set)")
+
+campaign_list <- gaData %>% group_by(campaign) %>% summarise(total_traffic = sum(sessions)) %>% top_n(totalCampaignsSelected)
 
 # ------------------------------------------------------------------------
 # FUNCTIONS
@@ -88,28 +101,13 @@ normalize_date_start <- function(campaign){
     mutate(cumTransactions = cumsum(transactions)) %>% 
     
     # Grab just the columns we need for our visualization!
-    dplyr::select(campaign, days_live, sessions, cumSessions, newUsers, cumNewUsers, transactions, cumTransactions)
+    dplyr::select(campaign, days_live, sessions, cumSessions, newUsers, cumNewUsers)#, transactions, cumTransactions)
 }
 
 
 # ------------------------------------------------------------------------
-# IMPORT DATA
-# ------------------------------------------------------------------------
-
-ga_auth(new_user = TRUE)
-#meta <- google_analytics_meta()
-
-#get data
-gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, dim_filters = gaDimFilters, anti_sample = TRUE)
-
-# ------------------------------------------------------------------------
 # DATA HANDLING
 # ------------------------------------------------------------------------
-
-#deleted (not set)
-gaData <- subset(gaData, gaData$campaign!="(not set)")
-
-campaign_list <- gaData %>% group_by(campaign) %>% summarise(total_traffic = sum(sessions)) %>% top_n(totalCampaignsSelected)
 
 # The first little bit of magic can now occur. We'll run our normalize_date_start function on
 # each value in our list of pages and get a data frame back that has our time-normalized

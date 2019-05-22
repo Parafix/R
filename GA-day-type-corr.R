@@ -33,12 +33,13 @@ ga_auth(new_user = TRUE)
 
 #meta <- google_analytics_meta()
 
-gaViewId <- "97928845"
-gaDateRange <- c("2018-01-01","2018-10-31")
+gaViewId <- "2897692"
+gaDateRange <- c("2016-01-01","2018-05-05")
 #gaDimensions <- c("date","deviceCategory","channelGrouping")
 #gaDimensions <- c("date","deviceCategory","dayOfWeek")
-gaDimensions <- c("date","dayOfWeek")
-gaMetrics <- c("sessions","newUsers","transactions","transactionRevenue")
+#gaDimensions <- c("date","dayOfWeek")
+gaDimensions <- c("date")
+gaMetrics <- c("sessions","newUsers","transactions","transactionRevenue","bounceRate")
 gaDelta <- order_type("date","ASCENDING", "DELTA")
 
 
@@ -58,6 +59,11 @@ gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetri
 # gaDataSelectedRevenue <- gaData %>% 
 #   select(date, deviceCategory, transactionRevenue, dayOfWeek) %>%
 #   spread(deviceCategory, transactionRevenue)
+
+# SESSIONS
+gaDataSelectedSessions <- gaData
+gaDataSelectedSessions[is.na(gaDataSelectedSessions)] <- 0
+
 
 gaDataSelectedRevenue <- gaData %>% 
   select(date, dayOfWeek, transactionRevenue) %>%
@@ -100,13 +106,15 @@ gaDataSelectedRevenue$feestdag[is.na(gaDataSelectedRevenue$feestdag)] <- 0
 # - GENERAL STATISTICS -------------------------------------------------------
 
 gaDataSelectedRevenueCor <- gaDataSelectedRevenue[,-1]
-
 #normalize or not? DO THE TEST
 pairs(gaDataSelectedRevenueCor)
 cor(gaDataSelectedRevenueCor)
-
 col<- colorRampPalette(c("red", "white", "blue"))(20)
 corrplot(cor(gaDataSelectedRevenueCor),method="number",col=col,type="upper", order="alphabet")
+
+#gaDataSelectedSessionsCor <- gaDataSelectedSessions[,-1]
+#col<- colorRampPalette(c("red", "white", "blue"))(20)
+#corrplot(cor(gaDataSelectedSessionsCor),method="number",col=col,type="upper", order="alphabet")
 
 
 library(ggplot2)
@@ -126,14 +134,22 @@ gg <- ggplot(data = gaDataSelectedRevenue) +
   gg <- gg + geom_line(aes(x = as.Date(date), y = `total`), col = "blue")
   gg + geom_line(aes(x = as.Date(date), y = `5`), col = "orange")
   
-
   
 library(xts)
 gaDataSelectedRevenueXTS <- xts(gaDataSelectedRevenue[-1], order.by = as.Date(gaDataSelectedRevenue$date), frequency = 7)
 
+gaDataSelectedSessionsTS <- ts(gaDataSelectedSessions$sessions, frequency = 365)
+plot(gaDataSelectedSessionsTS, type="b")
+plot(log(gaDataSelectedSessionsTS)) #if fluctuations are increasing per time index
+
+plot(decompose(gaDataSelectedSessionsTS))
+plot(decompose(ts(gaDataSelectedSessions, frequency = 365)[, "newUsers"]))#,type="b")
+
+gaDataSelectedSessionsXTS <- xts(gaDataSelectedSessions$sessions, order.by = as.Date(gaDataSelectedSessions$date), frequency = 365)
+
 library(CausalImpact)
-pre.period <- as.Date(c("2018-02-01","2018-05-31"))
-post.period <- as.Date(c("2018-06-01","2018-09-30"))
+pre.period <- as.Date(c("2019-04-14","2016-01-01"))
+post.period <- as.Date(c("2019-04-15","2019-05-05"))
 
 ## data in order of response, predictor1, predictor2, etc.
 ciModel <- gaDataSelectedXTS[, c("total","feestdag","0")]

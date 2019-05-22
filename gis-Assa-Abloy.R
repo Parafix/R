@@ -42,30 +42,30 @@ setwd('/Users/driesbultynck/Desktop/_Dries/_Analytics/_R/')
 #rm(list=ls())
 #dev.off()
 
-gaClient <- "AVogel"
-gaViewName <- "Master"
-gaViewId <- "2897692"
+gaClient <- "Assa-Abloy"
+gaViewName <- "Assa-Abloy-Entrance-Filtered"
+gaViewId <- "122830170"
 gaDateRange <- c("2018-01-01","2018-12-31")
-gaDimensions <- c("month","city","country","longitude","latitude") #,"deviceCategory", sourceMedium, pagePath, month, year
-gaMetrics <- c("itemRevenue") 
+gaDimensions <- c("city","country","longitude","latitude") #,"deviceCategory", sourceMedium, pagePath, month, year
+gaMetrics <- c("sessions","pageviewsPerSession","goal3Completions") 
 #for visit stuff -> "sessions","percentNewSessions","pageviews","entrances","exitRate","exits","bounces","bounceRate","pageValue","transactions"
-gaDelta <- order_type("date","ASCENDING", "DELTA")
+#gaDelta <- order_type("date","ASCENDING", "DELTA")
 gaDimFilterCountry <- dim_filter("country","EXACT","Belgium")
-gaDimFilterProducts <- dim_filter("productName","REGEXP","Echinaforce|Dormeasan|Oogdruppels|Herbamare"))
-gaDimFilters <- filter_clause_ga4(list(gaDimFilterCountry,gaDimFilterProducts))
+#gaDimFilterProducts <- dim_filter("productName","REGEXP","Echinaforce|Dormeasan|Oogdruppels|Herbamare"))
+#gaDimFilters <- filter_clause_ga4(list(gaDimFilterCountry,gaDimFilterProducts))
 
-gaMetFilterItemRevenue <- met_filter("itemRevenue", "GREATER", 0)
-gaMetFilters <- filter_clause_ga4(list(gaMetFilterItemRevenue)) #gaMetFilterTransactions
+#gaMetFilterItemRevenue <- met_filter("goal3Completions", "EQUALS", 0)
+#gaMetFilters <- filter_clause_ga4(list(gaMetFilterItemRevenue)) #gaMetFilterTransactions
 #gaMetFilterTransactions <- met_filter("transactions", "GREATER", 0) #for visit stuff
 
-filter_d <- filter_clause_ga4(list(
-  dim_filter("country", "EXACT", "Belgium"),
-  dim_filter("productName", "REGEXP", 'Hemoclin|Multi-gyn|Aciforce') #Echinaforce|Dormeasan|Oogdruppels|Herbamare
-),operator = "AND"
-)
-
+# filter_d <- filter_clause_ga4(list(
+#   dim_filter("country", "EXACT", "Belgium"),
+#   dim_filter("productName", "REGEXP", 'Hemoclin|Multi-gyn|Aciforce') #Echinaforce|Dormeasan|Oogdruppels|Herbamare
+# ),operator = "AND"
+# )
+# 
 filter_m <- filter_clause_ga4(list(
-  met_filter("itemRevenue", "EQUAL", 0)
+  met_filter("goal3Completions", "GREATER", 0)
 )
 )
 
@@ -121,8 +121,7 @@ col_wijs_r = c("#FF4040")
 #Google Analytics
 ga_auth(new_user = TRUE)
 #meta <- google_analytics_meta()
-#gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, dim_filters = gaDimFilters , met_filters = gaMetFilters, anti_sample = TRUE)
-gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, met_filters = filter_m, anti_sample = TRUE) #, dim_filters = filter_d 
+gaData <- google_analytics(gaViewId, date_range = gaDateRange, metrics = gaMetrics, dimensions = gaDimensions, met_filters = filter_m, anti_sample = TRUE)
 
 #Excel
 #dfPABWL = read.xlsx("2018-postcodes-of-Wallonian-pharmacists.xlsx")
@@ -148,13 +147,23 @@ dfOffline <- inner_join(dfLocations,dfPAB, by=c("V1"))
 gaCities <- gaData %>%
   filter(country == "Belgium") %>%
   group_by(city) %>%
-  summarise(longitude = max(longitude), latitude= max(latitude), sessions = sum(sessions), pageviews=sum(pageviews), entrances = sum(entrances), bounces = sum(bounces), pageValue = mean(pageValue), transactions=sum(transactions, percentNewSessions =  mean(percentNewSessions), exitRate = mean(exitRate), bounceRate=mean(bounceRate))) %>%
+  summarise(longitude = max(longitude), latitude= max(latitude), sessions = sum(sessions), pageviewsPerSession=sum(pageviewsPerSession), goal3Completions=sum(goal3Completions)) %>%
+  #summarise(longitude = max(longitude), latitude= max(latitude), sessions = sum(sessions), pageviews=sum(pageviews), entrances = sum(entrances), bounces = sum(bounces), pageValue = mean(pageValue), transactions=sum(transactions, percentNewSessions =  mean(percentNewSessions), exitRate = mean(exitRate), bounceRate=mean(bounceRate))) %>%
   filter(city!="(not set)") %>%
+  arrange(as.numeric(-goal3Completions)) %>%
   mutate(
-    quartile = ntile(sessions, 4),
-    decentile = ntile(sessions, 10),
-    percentile = ntile(sessions, 100),
-    percent = sessions/sum(sessions)
+    sQuartile = ntile(sessions, 4),
+    sDecentile = ntile(sessions, 10),
+    sPercentile = ntile(sessions, 100),
+    sPercent = sessions/sum(sessions),
+    psQuartile = ntile(pageviewsPerSession, 4),
+    psDecentile = ntile(pageviewsPerSession, 10),
+    psPercentile = ntile(pageviewsPerSession, 100),
+    psBmMean = (pageviewsPerSession/mean(pageviewsPerSession))-1,
+    lQuartile = ntile(goal3Completions, 4),
+    lDecentile = ntile(goal3Completions, 10),
+    lPercentile = ntile(goal3Completions, 100),
+    lPercent = goal3Completions/sum(goal3Completions),
   )
 
 #itemRev stuff
@@ -162,14 +171,14 @@ gaCities <- gaData %>%
   filter(country == "Belgium") %>%
   group_by(city) %>%
   summarise(longitude = max(longitude), latitude= max(latitude), itemRevenue = sum(itemRevenue)) %>%
-  filter(city!="(not set)") #%>% 
-  # mutate(
-  #   quartile = ntile(itemRevenue, 4),
-  #   decentile = ntile(itemRevenue, 10),
-  #   percentile = ntile(itemRevenue, 100),
-  #   percent = itemRevenue/sum(itemRevenue),
-  #   addUp = cumsum(percent)
-  #   )
+  filter(city!="(not set)") %>% 
+  mutate(
+    quartile = ntile(itemRevenue, 4),
+    decentile = ntile(itemRevenue, 10),
+    percentile = ntile(itemRevenue, 100),
+    percent = itemRevenue/sum(itemRevenue),
+    addUp = cumsum(percent)
+    )
 
 dfOnline <- as.data.frame(gaCities)
 colnames(dfOnline)[2] <- "V3"
@@ -206,9 +215,14 @@ dfOnline$V4 <- as.numeric(dfOnline$V4)
 #map <- get_map("Belgium", zoom = 4)
 #mapPoints <- ggmap(map) + geom_point(aes(x = V3, y = V4, size = sqrt(dfLocations)), data = dfLocations, alpha = .5)
 
-#plot locations
+# ------------------------------------------------------------------------
+# VISUALIZATION LOCATIONS
+# ------------------------------------------------------------------------
 qmplot(V3,V4,data=dfLocations, maptype = "toner-background", color = I("red"), geom = "density2d")
 
+# ------------------------------------------------------------------------
+# VISUALIZATION OFFLINE
+# ------------------------------------------------------------------------
 #plot density of biohorma pharmacists (based on cities)
 qmplot(V3,V4,data=dfOffline, geom = "blank", zoom = 9, maptype = "toner-lite", legend = "topleft") + 
   stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = .3, color = NA) + 
@@ -219,15 +233,27 @@ qmplot(V3,V4,data=dfOffline, maptype = "toner", color=I("red2"), geom = "density
 qmplot(V3,V4,data=dfOffline, maptype = "toner", color=I("red2"), geom = "density2d") + facet_wrap(~ pharmacists) + theme(panel.spacing = unit(1, "lines"))
 qmplot(V3,V4,data=dfOffline, maptype = "toner", color=I("red2"), size=pharmacists, zoom=10) + facet_wrap(~ pharmacists) + theme(panel.spacing = unit(1, "lines"))
 
-#plot density of biohorma visitors (based on cities)
+# ------------------------------------------------------------------------
+# VISUALIZATION ONLINE
+# ------------------------------------------------------------------------
+
+plot(gaCities$sessions,gaCities$goal3Completions)
+plot(gaCities$pageviewsPerSession,gaCities$goal3Completions)
+
+barplot(gaCities$goal3Completions,col=c("#FF4040"),names.arg=gaCities$city, main="Distribution of leads per city", xlab="Cities", ylab="Leads")
+
+ggplot(gaCities, aes(goal3Completions, ..density..)) +
+  geom_histogram(binwidth=1, fill="red", colour="grey60", size=.2) +
+  geom_density() +
+  facet_grid(sQuartile~.)
+
 qmplot(V3,V4,data=dfOnline, geom = "blank", zoom = 9, maptype = "toner-lite", legend = "topleft") + 
   stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = .3, color = NA) + 
-  scale_fill_gradient2("Biohorma Propensity", low = "white", mid = "yellow", high = "red", midpoint = 0)
+  scale_fill_gradient2("Propensity", low = "white", mid = "yellow", high = "red", midpoint = 0)
 
-#plot density of sessions by visitors avogel.be
 qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), geom = "density2d")
-qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), geom = "density2d") + facet_wrap(~ decentile) + theme(panel.spacing = unit(1, "lines"))
-qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), size=itemRevenue, zoom=8) + facet_wrap(~ decentile) + theme(panel.spacing = unit(1, "lines"))
+qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), geom = "density2d") + facet_wrap(~ sDecentile) + theme(panel.spacing = unit(1, "lines"))
+qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), size=goal3Completions, zoom=8) + facet_wrap(~ lDecentile) + theme(panel.spacing = unit(1, "lines"))
 
 
 # tempZonderO <- temp %>% filter(Bestelden > 0)
@@ -291,6 +317,6 @@ qmplot(V3,V4,data=dfOnline, maptype = "toner", color=I("red2"), size=itemRevenue
 # EXPORT
 # ------------------------------------------------------------------------
 
-write.xlsx(dfOnline, paste(gaClient,"-",gaViewName,"-GIS-TABOO-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
+write.xlsx(dfOnline, paste(gaClient,"-",gaViewName,"-GIS-LEADS-",gaDateRange[1],"-",gaDateRange[2],".xls", sep=""))
 #dev.copy(png, paste(gaClient,"-",gaViewName,"-SE0-Plot-Cluster-",firstPrio,".png", sep=""),width=2048,height=1536,res=72)
 #dev.off()
